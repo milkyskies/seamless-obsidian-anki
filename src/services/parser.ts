@@ -1,7 +1,6 @@
 import {
 	App,
 	Editor,
-	editorEditorField,
 	MarkdownView,
 	TFile,
 } from "obsidian";
@@ -15,7 +14,8 @@ export class Parser {
 	private editor: Editor;
 
 	private matches: string[] = [];
-	private basiccards: BasicCard[] = [];
+
+	private pattern = /(?<front>.+?)(?<seperator>>>)(?<back>.*?)(?<comment>%%.*?(?<anki>anki\((?<properties>.*?)\)).*?%%|$)/gmi;
 
 	constructor(app: App) {
 		this.app = app;
@@ -23,45 +23,28 @@ export class Parser {
 
 	// https://regex101.com/r/OIZEIQ/3
 	// https://regex101.com/r/a1AtGP/2
+	// https://regex101.com/r/a1AtGP/3
 
 	public async generateCards(activeFile: TFile): Promise<BasicCard[]> {
-
 		const view = await this.app.workspace.getActiveViewOfType(MarkdownView);
-
-
-		const pattern = /(.+?)(>>)(.*?)(%%(.*?(anki\((.*?)\)).*)?%%|$)/gmi;
-		//const text = await this.app.vault.read(activeFile);
+		const basiccards: BasicCard[] = [];
 		const editor = view.editor;
 		const text = editor.getValue();
-		let newText: string = text;
+		const pattern = this.pattern;
+
+
 		let match = pattern.exec(text);
 
 		//console.log(this.matchingLines(text, pattern));
 
 		// runs the code inside of the brackets for each line. they are all line numbers!!
-		this.matchingLines(text, pattern).forEach(function (line, index) {
+		this.matchingLines(text, pattern).forEach(function (line: number, index: number) {
 			match = pattern.exec(text);
-			if (match[4] == "") {
-				editor.setLine(line, match[1] + match[2] + match[3] + " %%anki(id:aaa)%%");
-			}
-			console.log("Oh yeah: " + match[4] + " (Line number " + line );
+
+			basiccards.push(new BasicCard(-1, line, match[1], match[3]));
 		});
 
-
-		//newText = newText.replace(pattern, "yo")
-
-		//console.log(newText);
-		//
-		//while (match != null) {
-			//this.basiccards.push(new BasicCard(-1, match[1], match[3]));
-			//console.log("Oh yeah: " + match[4]);
-			//newText = newText.replace(pattern, "yo")
-			//console.log(newText);
-			//console.log("hello");
-			//match = pattern.exec(text);
-		//}
-		//view.editor.setValue(newText);
-		return this.basiccards;
+		return basiccards;
 	}
 
 
@@ -77,4 +60,16 @@ export class Parser {
 	
 		return matchingLines;
 	}
+
+	public getSubStrings(text: string): string[] {
+		const substrings: string[] = [];
+
+		const match = this.pattern.exec(text);
+		for (let i = 0; i < match.length; i++) {
+			if (match[i] == null) match[i] = ""; 
+			substrings.push(match[i]);
+		}
+		return substrings;
+	}
+
 }

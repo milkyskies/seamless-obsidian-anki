@@ -43,8 +43,14 @@ export class Anki {
                 "Back": back
             }}
         }).catch((e: unknown) => console.log(e));
-        if (result) console.log(result)
 
+        if (result) {
+          return result;
+        }
+        else {
+          console.log("something aint right");
+        }
+        //if (result) console.log(result)
         //result.then(value => console.log(value));
     }
 
