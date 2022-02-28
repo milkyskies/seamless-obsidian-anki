@@ -1,32 +1,52 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile} from 'obsidian';
+import { CardsService } from 'src/services/cards';
+//import { Anki } from 'src/services/anki';
+//import { Regex } from 'src/regex';
+//import { Parser } from 'src/services/parser';
 
 // Remember to rename these classes and interfaces!
 
-interface MyPluginSettings {
-	mySetting: string;
+interface SeamlessAnkiSettings {
+	mySetting: string
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
+const DEFAULT_SETTINGS: SeamlessAnkiSettings = {
 	mySetting: 'default'
 }
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class SeamlessAnki extends Plugin {
+	private cardsService: CardsService;
+	
+	settings: SeamlessAnkiSettings
 
 	async onload() {
+		console.log('Loading Plugin: Seamless Anki');
+
+		//const anki = new Anki();
+		this.cardsService = new CardsService(this.app);
+
 		await this.loadSettings();
 
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
+		// // This creates an icon in the left ribbon.
+		// const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
+		// 	// Called when the user clicks the icon.
+		// 	new Notice('This is a notice!');
+		// });
+		// // Perform additional things with the ribbon
+		// ribbonIconEl.addClass('my-plugin-ribbon-class');
 
 		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
 		const statusBarItemEl = this.addStatusBarItem();
 		statusBarItemEl.setText('Status Bar Text');
+		
+		this.addRibbonIcon('dice', 'Generate flashcards', () => {
+			const activeFile = this.app.workspace.getActiveFile()
+			if (activeFile) {
+				this.generateCards(activeFile)
+			} else {
+				new Notice("Open a file before")
+			}
+		});
 
 		// This adds a simple command that can be triggered anywhere
 		this.addCommand({
@@ -41,8 +61,9 @@ export default class MyPlugin extends Plugin {
 			id: 'sample-editor-command',
 			name: 'Sample editor command',
 			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
+				// console.log(editor.getSelection());
+				console.log(editor.lastLine());
+				//editor.replaceSelection('Sample Editor Command');
 			}
 		});
 		// This adds a complex command that can check whether the current state of the app allows execution of the command
@@ -65,6 +86,14 @@ export default class MyPlugin extends Plugin {
 			}
 		});
 
+		this.addCommand({
+			id: 'hello-world',
+			name: 'Hello World',
+			callback: () => {
+				console.log('Hello World!');
+			}
+		});
+
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 
@@ -79,7 +108,7 @@ export default class MyPlugin extends Plugin {
 	}
 
 	onunload() {
-
+		console.log('Unloading Plugin: Seamless Anki');
 	}
 
 	async loadSettings() {
@@ -89,6 +118,21 @@ export default class MyPlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
+
+	private generateCards(activeFile: TFile) {
+		//const anki = new Anki();
+		//anki.addNote();
+		const cardsService = this.cardsService;
+		cardsService.execute(activeFile).then(res => {
+			for (const r of res) {
+				new Notice(r,  15*1000)
+			}
+			console.log(res)
+		}).catch(err => {
+			Error(err)
+		});
+	}
+	
 }
 
 class SampleModal extends Modal {
@@ -108,9 +152,9 @@ class SampleModal extends Modal {
 }
 
 class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+	plugin: SeamlessAnki;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: SeamlessAnki) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -134,4 +178,6 @@ class SampleSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 	}
+	
 }
+
