@@ -122,6 +122,7 @@ export default class SeamlessAnki extends Plugin {
 	private generateCards(activeFile: TFile) {
 		//const anki = new Anki();
 		//anki.addNote();
+
 		const cardsService = this.cardsService;
 		cardsService.execute(activeFile).then(res => {
 			for (const r of res) {

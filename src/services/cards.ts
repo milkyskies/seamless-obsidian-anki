@@ -25,7 +25,7 @@ export class CardsService {
         // fs.writeFileSync("/home/onesc/Coding/Obsidian Test Vault/Test Vault/.obsidian/plugins/seamless-obsidian-anki/testing/filetext.txt", this.file);
         // return;
 
-        // // https://regex101.com/r/1U3RW4/1
+        // // https://regex101.com/r/OIZEIQ
     }
 
     private async insertCardsOnAnki(cards: BasicCard[]) {
@@ -33,5 +33,9 @@ export class CardsService {
 		for (let i = 0; i < cards.length; i++) {
 			anki.addNote(cards[i].front, cards[i].back);
 		}
+    }
+
+    private async insertAnkiDataOnPage() {
+        
     }
 }
