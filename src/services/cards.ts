@@ -7,6 +7,7 @@ import {
 import { Parser } from 'src/services/parser';
 import { Anki } from 'src/services/anki';
 import { BasicCard } from 'src/entities/basiccard';
+import { Properties } from 'src/entities/properties';
 
 export class CardsService {
 
@@ -46,21 +47,20 @@ export class CardsService {
 		}
     }
 
-    private async insertAnkiDataOnPage(line: number, id: string) {
+    private async insertAnkiDataOnPage(line: number, id: number) {
         const view = await this.app.workspace.getActiveViewOfType(MarkdownView);
-        id = id.toString();
         const editor = view.editor;
         const parser = new Parser(this.app);
         const substrings = parser.getSubStrings(editor.getLine(line));
 
-        // Question >> The answer is here %% anki(jjjj) %%  poop
+        // Question >> The answer is here %% anki(jjjj) %%  p
         // front: Question
         // seperator: >>
         // back: The answer is here
-        // extra: %% anki(jjjj) %%  poop
+        // extra: %% anki(jjjj) %%  p
         // anki: %% anki(jjjj) %%
         // properties: jjjj
-        // rest: poop
+        // rest: p
 
         //const full = substrings[0];
         const front = substrings[1];
@@ -82,7 +82,7 @@ export class CardsService {
         //if (anki == "") {
         //    newAnki = `%%anki(id=${ankiData})%%`
         //} 
-        
+
         // properties is an object, get properties from the propertystring
         const propertyObj = parser.getProperties(properties);
 
@@ -101,15 +101,16 @@ export class CardsService {
         }
     }
 
-    private buildAnkiString(propertyObj: any, id: string): string {
-        let propertyString = "";
+    private buildAnkiString(propertyObj: Properties, id: number): string {
+        //let propertyString = "";
         if(propertyObj["id"] != id) propertyObj["id"] = id;
-        for (const key in propertyObj) {
-            propertyString = propertyString + " " + key + "=" + propertyObj[key]; 
-        }
-        propertyString = propertyString.trim();
 
-        const ankiString = "%%anki(" + propertyString + ")%%";
+        //for (const key in propertyObj) {
+        //    propertyString = propertyString + " " + key + "=" + propertyObj[key]; 
+        //}
+        //propertyString = propertyString.trim();
+
+        const ankiString = "%%anki(" + propertyObj.getPropertyString() + ")%%";
 
         return ankiString;
     }
