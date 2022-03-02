@@ -6,7 +6,7 @@ import {
 } from "obsidian";
 
 import { BasicCard } from 'src/entities/basiccard';
-
+import { Properties } from "src/entities/properties";
 
 export class Parser {
 	private app: App;
@@ -80,40 +80,72 @@ export class Parser {
 		return substrings;
 	}
 
-	public getProperties(text: string): string[] {
 
-		// "properties" is the object of all properties for one block
-		// "match" is one property block, and the [i] is values of that property
+	public getProperties(text: string): Properties {
 
-		const properties: any = {};
-
-		const validProperties: string[] = ["id", "reverse"]
-
-		let match: any = this.propertyPattern.exec(text);
+		let match: RegExpExecArray = this.propertyPattern.exec(text);
 		
-		while(match != null) {
+		const writtenProperties = {} as Properties;
 
-			let key;
-			let value;
+		while(match != null) {
+			let key: string;
+			let value: number | string | boolean;
+
 			if (match[2] == null || match[2] == "") {
 				key = match[1];
-				value = "true";
-				//properties[match[1]] = "true";
+				value = true;
 			} else {
 				key = match[2];
 				value = match[3];
-				//properties[match[2]] = match[3];
 			}
 
-			if (!validProperties.includes(key)) {
+			if (Properties.hasOwnProperty(key)) {
 				throw('"'+key+'" is not a valid property.');
 			} else {
-				properties[key] = value;
+				writtenProperties[key] = value;
 			}
 
 			match = this.propertyPattern.exec(text);
 		}
-		return properties;
+
+		return new Properties(writtenProperties);
 	}
+
+
+	// public getPropertiesOld(text: string): string[] {
+
+	// 	// "properties" is the object of all properties for one block
+	// 	// "match" is one property block, and the [i] is values of that property
+
+	// 	const properties: any = {};
+
+	// 	const validProperties: string[] = ["id", "reverse"]
+
+	// 	let match: any = this.propertyPattern.exec(text);
+		
+	// 	while(match != null) {
+
+	// 		let key;
+	// 		let value;
+	// 		if (match[2] == null || match[2] == "") {
+	// 			key = match[1];
+	// 			value = "true";
+	// 			//properties[match[1]] = "true";
+	// 		} else {
+	// 			key = match[2];
+	// 			value = match[3];
+	// 			//properties[match[2]] = match[3];
+	// 		}
+
+	// 		if (!validProperties.includes(key)) {
+	// 			throw('"'+key+'" is not a valid property.');
+	// 		} else {
+	// 			properties[key] = value;
+	// 		}
+
+	// 		match = this.propertyPattern.exec(text);
+	// 	}
+	// 	return properties;
+	// }
 
 }
