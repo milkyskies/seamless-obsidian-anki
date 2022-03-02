@@ -102,13 +102,7 @@ export class CardsService {
     }
 
     private buildAnkiString(propertyObj: Properties, id: number): string {
-        //let propertyString = "";
         if(propertyObj["id"] != id) propertyObj["id"] = id;
-
-        //for (const key in propertyObj) {
-        //    propertyString = propertyString + " " + key + "=" + propertyObj[key]; 
-        //}
-        //propertyString = propertyString.trim();
 
         const ankiString = "%%anki(" + propertyObj.getPropertyString() + ")%%";
 

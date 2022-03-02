@@ -27,9 +27,13 @@ export class Properties extends Object {
 
         Object.keys(this).forEach(key => {
             if (key!= "defaults") {
-                propertyString += " " + key + "=" + this[key];
+                if (this[key] != this.defaults[key]) {
+                    console.log(typeof this[key]);
+                    propertyString += " " + key + "=" + this[key];
+                }
             }
         });
+
         propertyString = propertyString.trim();
         return propertyString;
     }
