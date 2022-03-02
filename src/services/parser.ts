@@ -15,15 +15,23 @@ export class Parser {
 
 	private matches: string[] = [];
 
-	private pattern = /(?<front>.+?)(?<seperator>>>)(?<back>.*?)(?<comment>%%.*?(?<anki>anki\((?<properties>.*?)\)).*?%%|$)/gmi;
+	// https://regex101.com/r/OIZEIQ/3
+	// https://regex101.com/r/a1AtGP/2
+	// https://regex101.com/r/a1AtGP/3
+	// https://regex101.com/r/Ov7ysu/1
+	// https://regex101.com/r/Ov7ysu/2
+	// https://regex101.com/r/x56wYj/1
+
+	private pattern = /(.+?)(>>)(.*?)((%%.*?anki\((.*?)\).*?%%)(.*)|$)/gmi;
+
+	// https://regex101.com/r/kixTYa/1
+	// https://regex101.com/r/c57qt7/2
+
+	private propertyPattern = /(([^\s]+?)(?:=)(".+?"|.+?)|.+?)(?:\s|$)/ig
 
 	constructor(app: App) {
 		this.app = app;
 	}
-
-	// https://regex101.com/r/OIZEIQ/3
-	// https://regex101.com/r/a1AtGP/2
-	// https://regex101.com/r/a1AtGP/3
 
 	public async generateCards(activeFile: TFile): Promise<BasicCard[]> {
 		const view = await this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -70,6 +78,42 @@ export class Parser {
 			substrings.push(match[i]);
 		}
 		return substrings;
+	}
+
+	public getProperties(text: string): string[] {
+
+		// "properties" is the object of all properties for one block
+		// "match" is one property block, and the [i] is values of that property
+
+		const properties: any = {};
+
+		const validProperties: string[] = ["id", "reverse"]
+
+		let match: any = this.propertyPattern.exec(text);
+		
+		while(match != null) {
+
+			let key;
+			let value;
+			if (match[2] == null || match[2] == "") {
+				key = match[1];
+				value = "true";
+				//properties[match[1]] = "true";
+			} else {
+				key = match[2];
+				value = match[3];
+				//properties[match[2]] = match[3];
+			}
+
+			if (!validProperties.includes(key)) {
+				throw('"'+key+'" is not a valid property.');
+			} else {
+				properties[key] = value;
+			}
+
+			match = this.propertyPattern.exec(text);
+		}
+		return properties;
 	}
 
 }

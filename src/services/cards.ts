@@ -21,7 +21,9 @@ export class CardsService {
     }
 
     public async execute(activeFile: TFile): Promise<string[]> {
+        
         const parser = new Parser(this.app);
+
         const cards = await parser.generateCards(activeFile);
         await this.insertCardsOnAnki(cards);
         return;
@@ -33,7 +35,6 @@ export class CardsService {
         // fs.writeFileSync("/home/onesc/Coding/Obsidian Test Vault/Test Vault/.obsidian/plugins/seamless-obsidian-anki/testing/filetext.txt", this.file);
         // return;
 
-        // // https://regex101.com/r/OIZEIQ/2
     }
 
     private async insertCardsOnAnki(cards: BasicCard[]) {
@@ -45,20 +46,72 @@ export class CardsService {
 		}
     }
 
-    private async insertAnkiDataOnPage(line: number, ankiData: string) {
+    private async insertAnkiDataOnPage(line: number, id: string) {
         const view = await this.app.workspace.getActiveViewOfType(MarkdownView);
-        ankiData = ankiData.toString();
+        id = id.toString();
         const editor = view.editor;
         const parser = new Parser(this.app);
         const substrings = parser.getSubStrings(editor.getLine(line));
-        let newLine = "";
-        if (!substrings[3].endsWith(" ")) substrings[3] = substrings[3] + " ";
-        if (substrings[4] == "") substrings[4] = `%%anki(id=${ankiData})%%`
-        for (let i = 1; i < substrings.length; i++) {
-            newLine = newLine + substrings[i];
-        }
-        //console.log(newLine);
 
-        editor.setLine(line, newLine);
+        // Question >> The answer is here %% anki(jjjj) %%  poop
+        // front: Question
+        // seperator: >>
+        // back: The answer is here
+        // extra: %% anki(jjjj) %%  poop
+        // anki: %% anki(jjjj) %%
+        // properties: jjjj
+        // rest: poop
+
+        //const full = substrings[0];
+        const front = substrings[1];
+        const seperator = substrings[2];
+        const back = substrings[3];
+        //const extra = substrings[4]; //don't really need maybe
+        const anki = substrings[5];
+        const properties = substrings[6];
+        const rest = substrings[7];
+
+        let newAnki = anki;
+        let newBack = back;
+
+        let newLine = "";
+
+
+        if (!back.endsWith(" ")) newBack = back + " ";
+
+        //if (anki == "") {
+        //    newAnki = `%%anki(id=${ankiData})%%`
+        //} 
+        
+        // properties is an object, get properties from the propertystring
+        const propertyObj = parser.getProperties(properties);
+
+        // ankistring is the new one, build new string
+        newAnki = this.buildAnkiString(propertyObj, id);
+
+        // write to document
+        if(newAnki != anki) {
+
+            newLine = front + seperator + newBack + newAnki + rest;
+
+            editor.setLine(line, newLine);
+            console.log("Modified line "+ line)
+        } else {
+            console.log("No changes")
+        }
     }
+
+    private buildAnkiString(propertyObj: any, id: string): string {
+        let propertyString = "";
+        if(propertyObj["id"] != id) propertyObj["id"] = id;
+        for (const key in propertyObj) {
+            propertyString = propertyString + " " + key + "=" + propertyObj[key]; 
+        }
+        propertyString = propertyString.trim();
+
+        const ankiString = "%%anki(" + propertyString + ")%%";
+
+        return ankiString;
+    }
+
 }

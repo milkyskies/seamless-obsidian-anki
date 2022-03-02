@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile} from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, MarkdownPostProcessor, MarkdownPostProcessorContext} from 'obsidian';
 import { CardsService } from 'src/services/cards';
 //import { Anki } from 'src/services/anki';
 //import { Regex } from 'src/regex';
@@ -21,10 +21,8 @@ export default class SeamlessAnki extends Plugin {
 
 	async onload() {
 		console.log('Loading Plugin: Seamless Anki');
-
 		//const anki = new Anki();
 		this.cardsService = new CardsService(this.app);
-
 		await this.loadSettings();
 
 		// // This creates an icon in the left ribbon.
@@ -84,7 +82,7 @@ export default class SeamlessAnki extends Plugin {
 					return true;
 				}
 			}
-		});
+		});	
 
 		this.addCommand({
 			id: 'hello-world',
@@ -105,6 +103,21 @@ export default class SeamlessAnki extends Plugin {
 
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
 		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+
+
+		const postProc: MarkdownPostProcessor = (el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
+			const paragraphs = el.querySelectorAll('p');
+			for(let i = 0; i < paragraphs.length; i++) {
+
+				const paragraph = (paragraphs[i] as HTMLElement).innerText;
+				if (paragraph.contains(">>")) {
+					(paragraphs[i] as HTMLElement).innerText = paragraph.replace(/\s*>>\s*/gm, " → ");			
+				}
+			}
+		}
+		
+		this.registerMarkdownPostProcessor(postProc);
+		
 	}
 
 	onunload() {
@@ -124,6 +137,8 @@ export default class SeamlessAnki extends Plugin {
 		//anki.addNote();
 
 		const cardsService = this.cardsService;
+		
+
 		cardsService.execute(activeFile).then(res => {
 			for (const r of res) {
 				new Notice(r,  15*1000)
