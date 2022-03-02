@@ -1,9 +1,15 @@
-export abstract class Card {
+export class Card {
     id: number;
-    line: number;
+    type: string;
+    fields: Fields;
 
-    constructor(id: number, line: number) {
+    constructor(id: number, type: string, fields: Fields) {
         this.id = id;
-        this.line = line;
+        this.type = type;
+        this.fields = fields;
     }
+}
+
+interface Fields {
+    [key: string]: string;
 }

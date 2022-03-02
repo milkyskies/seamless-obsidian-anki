@@ -4,8 +4,8 @@ export class BasicCard extends Card {
     front: string;
     back: string;
 
-    constructor(id: number, line: number, front: string, back: string) {
-        super(id, line);
+    constructor(id: number, lineNumber: number, front: string, back: string) {
+        super(id);
         this.front = front;
         this.back = back;
 

@@ -8,6 +8,7 @@ import { Parser } from 'src/services/parser';
 import { Anki } from 'src/services/anki';
 import { BasicCard } from 'src/entities/basiccard';
 import { Properties } from 'src/entities/properties';
+import { Card } from 'src/entities/card';
 
 export class CardsService {
 
@@ -22,11 +23,16 @@ export class CardsService {
     }
 
     public async execute(activeFile: TFile): Promise<string[]> {
-        
         const parser = new Parser(this.app);
 
-        const cards = await parser.generateCards(activeFile);
-        await this.insertCardsOnAnki(cards);
+        const blocks = await parser.getBlocks();
+
+        //const cards = await parser.generateCards(activeFile);
+        //await this.insertCardsOnAnki(cards).then;
+        for (let i = 0; i < blocks.length; i++) {
+            const id = await this.insertCardsOnAnki(blocks[i].generateBasicCard());
+            this.insertAnkiDataOnPage(blocks[i].lineNumber, id);
+        }
         return;
 
         // //const filePath = activeFile.basename;
@@ -38,20 +44,25 @@ export class CardsService {
 
     }
 
-    private async insertCardsOnAnki(cards: BasicCard[]) {
+    private async insertCardsOnAnki(card: Card) { // Also gives ID!
+        const anki = new Anki();
+        const id = await anki.addNote(card.fields["Front"], card.fields["Back"]);
+        return id;
+    }
+
+    private async insertCardsOnAnkiOld(cards: BasicCard[]) {
         const anki = new Anki();
 		for (let i = 0; i < cards.length; i++) {
             let id = await anki.addNote(cards[i].front, cards[i].back)
             id = <string>id
-            this.insertAnkiDataOnPage(cards[i].line, id);
 		}
     }
 
-    private async insertAnkiDataOnPage(line: number, id: number) {
+    private async insertAnkiDataOnPage(lineNumber: number, id: number) {
         const view = await this.app.workspace.getActiveViewOfType(MarkdownView);
         const editor = view.editor;
         const parser = new Parser(this.app);
-        const substrings = parser.getSubStrings(editor.getLine(line));
+        const substrings = parser.getSubStrings(editor.getLine(lineNumber));
 
         // Question >> The answer is here %% anki(jjjj) %%  p
         // front: Question
@@ -79,10 +90,6 @@ export class CardsService {
 
         if (!back.endsWith(" ")) newBack = back + " ";
 
-        //if (anki == "") {
-        //    newAnki = `%%anki(id=${ankiData})%%`
-        //} 
-
         // properties is an object, get properties from the propertystring
         const propertyObj = parser.getProperties(properties);
 
@@ -94,8 +101,8 @@ export class CardsService {
 
             newLine = front + seperator + newBack + newAnki + rest;
 
-            editor.setLine(line, newLine);
-            console.log("Modified line "+ line)
+            editor.setLine(lineNumber, newLine);
+            console.log("Modified line "+ lineNumber)
         } else {
             console.log("No changes")
         }
