@@ -40,6 +40,7 @@ export class Line {
         this.lineNumber = lineNumber;
         this.text = text;
         this.bulletLevel = this.getBulletLevel(text);
+        this.headerLevel = this.getHeaderLevel(text);
     }
 
     // the more bulletLevel, the farther down it is in the tree
@@ -51,5 +52,15 @@ export class Line {
 		}
 		return match[1].length + 1;
 	}
+
+    // the more bulletlevel, the lower level it is
+    // 100 is no header, 1 is 1 header, 2 is 2 header (smaller)
+    private getHeaderLevel(text: string): number {
+        const match = /(^#+?)\s.+/.exec(text);
+        if (match == null) {
+            return 100;
+        }
+        return match[1].length;
+    }
 
 }

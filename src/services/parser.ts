@@ -59,7 +59,7 @@ export class Parser {
 			}
 
 			const block = new Block(lineNumber, new Line(lineNumber, editor.getLine(lineNumber)));
-			block.itemParents = this.findLineParents(editor, block.line, 2);
+			block.itemParents = this.findLineParents(editor, block.line, 5);
 			block.descriptor = match[1];
 			block.value = match[3];
 			block.properties = this.getProperties(match[6]);
@@ -68,7 +68,7 @@ export class Parser {
 		return blocks;
 	}
 
-	private getLine(lineNumber: number) : Line {
+	private getLineFromLineNumber(lineNumber: number) : Line {
 		return new Line(lineNumber, this.lines[lineNumber]);
 	}
 
@@ -78,18 +78,30 @@ export class Parser {
 		
 		//bulletLevel = this.getBulletLevel(editor.getLine(lineNumber));
 
+		let lastLineNumber = line.lineNumber;
 		// For bullets!
 		let topBulletLevel = line.bulletLevel; //remember, larger number means smaller level.
 		for (let i = line.lineNumber; i > 1; i--)
 		{
 			if (parents.length >= maxParents) break;
-			const _line = this.getLine(i - 1)
+			const _line = this.getLineFromLineNumber(i - 1)
 			if (_line.bulletLevel < topBulletLevel) {
 				topBulletLevel = _line.bulletLevel;
+				lastLineNumber = _line.lineNumber;
 				parents.push(_line);
 			}
 		}
-		console.log(parents);
+
+		let bottomHeaderLevel = this.getLineFromLineNumber(lastLineNumber).headerLevel;
+		for (let i = lastLineNumber; i > 1; i--)
+		{
+			if (parents.length >= maxParents) break;
+			const _line = this.getLineFromLineNumber(i - 1)
+			if (_line.headerLevel < bottomHeaderLevel) {
+				bottomHeaderLevel = _line.headerLevel;
+				parents.push(_line);
+			}
+		}
 		return parents;
 	}
 
