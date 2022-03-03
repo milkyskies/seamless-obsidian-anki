@@ -6,9 +6,10 @@ import {
      } from 'obsidian';
 import { Parser } from 'src/services/parser';
 import { Anki } from 'src/services/anki';
-import { BasicCard } from 'src/entities/basiccard';
 import { Properties } from 'src/entities/properties';
 import { Card } from 'src/entities/card';
+import { Block } from 'src/entities/block';
+import { marked } from 'marked';
 
 export class CardsService {
 
@@ -23,14 +24,14 @@ export class CardsService {
     }
 
     public async execute(activeFile: TFile): Promise<string[]> {
+        this.file = activeFile.basename;
+
         const parser = new Parser(this.app);
 
-        const blocks = await parser.getBlocks();
-
-        //const cards = await parser.generateCards(activeFile);
-        //await this.insertCardsOnAnki(cards).then;
+        const blocks = await parser.getBlocks(this.file);
+        
         for (let i = 0; i < blocks.length; i++) {
-            const id = await this.insertCardsOnAnki(blocks[i].generateBasicCard());
+            const id = await this.insertCardOnAnki(this.generateCard(blocks[i]));
             this.insertAnkiDataOnPage(blocks[i].lineNumber, id);
         }
         return;
@@ -44,18 +45,38 @@ export class CardsService {
 
     }
 
-    private async insertCardsOnAnki(card: Card) { // Also gives ID!
-        const anki = new Anki();
-        const id = await anki.addNote(card.fields["Front"], card.fields["Back"]);
-        return id;
+    private generateCard(block: Block): Card {
+        let card: Card;
+        if (block.properties["type"] == "Basic") {
+            card = new Card(block.properties["id"], "Cloze");
+            const parents = block.itemParents;
+            if(parents.length > 0) {
+                card.fields["Text"] = this.convertTextToHTML(block.condenseLines(block.itemParents) + "\n" + block.line.descriptor + " → {{c1::" + block.line.value + "}}");
+            } else {
+                card.fields["Text"] = this.convertTextToHTML(this.removePrefix(block.line.descriptor) + " → {{c1::" + block.line.value + "}}");
+            }
+        }
+        return card;
     }
 
-    private async insertCardsOnAnkiOld(cards: BasicCard[]) {
+    public removePrefix(text: string): string {
+        const match = /(((^#+?)|(-))\s)(.+)/.exec(text);
+        if(match && match[5]) {
+            return match[5].trim();
+        } else {
+            return text;
+        }
+    }
+
+    public convertTextToHTML(text: string) : string {
+        const html = marked.parse(text);
+        return html;
+    }
+
+    private async insertCardOnAnki(card: Card) { // Also gives ID!
         const anki = new Anki();
-		for (let i = 0; i < cards.length; i++) {
-            let id = await anki.addNote(cards[i].front, cards[i].back)
-            id = <string>id
-		}
+        const id = await anki.addNote(card);
+        return id;
     }
 
     private async insertAnkiDataOnPage(lineNumber: number, id: number) {

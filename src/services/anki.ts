@@ -1,3 +1,5 @@
+import { Card } from 'src/entities/card';
+
 export class Anki {
 
     private invoke(action: string, version = 6, params = {}): any {
@@ -31,17 +33,16 @@ export class Anki {
         });
     }
 
-    public async addNote(front: string, back: string) {
+    public async addNote(card: Card) {
+      //console.log(card.fields);
       const result = await this.invoke("addNote", 6, { "note": {
             "deckName": "Default",
-            "modelName": "Basic",
+            "modelName": card.type,
             "options": {
               "allowDuplicate": true
             },
-            "fields": {
-                "Front": front,
-                "Back": back
-            }}
+            "fields": card.fields,
+            }
         }).catch((e: unknown) => console.log(e));
 
         if (result) {

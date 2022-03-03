@@ -5,7 +5,8 @@ import {
 } from "obsidian";
 
 import { Properties } from "src/entities/properties";
-import { Block, Line } from "src/entities/block";
+import { Block } from "src/entities/block";
+import { Line } from 'src/entities/line';
 
 export class Parser {
 	private app: App;
@@ -27,8 +28,8 @@ export class Parser {
 	// https://regex101.com/r/kixTYa/1
 	// https://regex101.com/r/c57qt7/2
 
-	private propertyPattern = /(([^\s]+?)(?:=)(".+?"|.+?)|.+?)(?:\s|$)/ig
-	
+	private propertyPattern = /(([^\s]+?)(?:=)(".+?"|.+?)|.+?)(?:\s|$)/gi;
+
 	private text: string;
 	private lines: string[];
 
@@ -36,12 +37,12 @@ export class Parser {
 		this.app = app;
 	}
 
-	public async getBlocks() : Promise<Block[]> {
+	public async getBlocks(file: string) : Promise<Block[]> {
 		const view = await this.app.workspace.getActiveViewOfType(MarkdownView);
 		const blocks: Block[] = [];
-		const editor = view.editor;
+		this.editor = await view.editor;
 
-		this.text = editor.getValue();
+		this.text = this.editor.getValue();
 		this.lines = this.text.split("\n");
 
 		const pattern = this.pattern;
@@ -58,50 +59,51 @@ export class Parser {
 				if (match[i] == null) match[i] = ""; 
 			}
 
-			const block = new Block(lineNumber, new Line(lineNumber, editor.getLine(lineNumber)));
-			block.itemParents = this.findLineParents(editor, block.line, 5);
-			block.descriptor = match[1];
-			block.value = match[3];
+			const block = new Block(file, lineNumber, new Line(file, lineNumber, this.editor.getLine(lineNumber)));
+			block.line.descriptor = match[1];
+			block.line.value = match[3];
 			block.properties = this.getProperties(match[6]);
+			block.itemParents = this.findLineParents(file, block.line, block.properties["context"]);
 			blocks.push(block);
 		});
 		return blocks;
 	}
 
-	private getLineFromLineNumber(lineNumber: number) : Line {
-		return new Line(lineNumber, this.lines[lineNumber]);
+	private getLineFromLineNumber(file : string, lineNumber: number) : Line {
+		return new Line(file, lineNumber, this.lines[lineNumber]);
 	}
 
-	private findLineParents(editor: Editor, line: Line, maxParents: number) : Line[] {
+	private findLineParents(file : string, line: Line, maxParents: number) : Line[] {
 
 		const parents = [];
 		
-		//bulletLevel = this.getBulletLevel(editor.getLine(lineNumber));
-
 		let lastLineNumber = line.lineNumber;
-		// For bullets!
+		
+		// For bullets
 		let topBulletLevel = line.bulletLevel; //remember, larger number means smaller level.
-		for (let i = line.lineNumber; i > 1; i--)
-		{
+		
+		for (let i = line.lineNumber; i > 1; i--) {
 			if (parents.length >= maxParents) break;
-			const _line = this.getLineFromLineNumber(i - 1)
+			const _line = this.getLineFromLineNumber(file, i - 1)
 			if (_line.bulletLevel < topBulletLevel) {
 				topBulletLevel = _line.bulletLevel;
 				lastLineNumber = _line.lineNumber;
-				parents.push(_line);
+				parents.unshift(_line);
 			}
 		}
 
-		let bottomHeaderLevel = this.getLineFromLineNumber(lastLineNumber).headerLevel;
-		for (let i = lastLineNumber; i > 1; i--)
-		{
+		// For headers
+		let bottomHeaderLevel = this.getLineFromLineNumber(file, lastLineNumber).headerLevel;
+		for (let i = lastLineNumber; i > 1; i--) {
 			if (parents.length >= maxParents) break;
-			const _line = this.getLineFromLineNumber(i - 1)
+			const _line = this.getLineFromLineNumber(file, i - 1)
 			if (_line.headerLevel < bottomHeaderLevel) {
 				bottomHeaderLevel = _line.headerLevel;
-				parents.push(_line);
+				parents.unshift(_line);
 			}
 		}
+		
+		//parents = parents.reverse();
 		return parents;
 	}
 
@@ -144,8 +146,14 @@ export class Parser {
 			}
 
 			if (match[2] == null || match[2] == "") {
-				key = match[1];
-				value = true;
+				if (match[1] == "c" || match[1] == "context") {
+					key = "context";
+					value = 10;
+				}
+				else {
+					key = match[1];
+					value = true;
+				}
 			} else if (match[3] == "true") {
 				key = match[2];
 				value = true;
