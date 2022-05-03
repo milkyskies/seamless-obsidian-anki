@@ -24,7 +24,6 @@ Arguments
 	- If it is 0, it is the current line
 	- 1 goes up
 	- if ;;, then 1 is default. if >>, then 0 is default.
-- reverse (r): 
 - context (c)
 	- is minimum context
 	- default is -1 (infinite)

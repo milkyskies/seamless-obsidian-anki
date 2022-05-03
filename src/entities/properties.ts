@@ -9,7 +9,6 @@ export class Properties extends Object {
         deck: "Default",
         item: 0,
         context: 0,
-        reverse: false,
     } as Properties;
 
     id = -1;
@@ -22,8 +21,6 @@ export class Properties extends Object {
 
     item = 0; // the item is the same as the descriptor
     context = 0; // no context
-
-    reverse = false;
 
     // https://stackoverflow.com/questions/46496245/how-to-supply-default-values-to-es6-class-properties
 
