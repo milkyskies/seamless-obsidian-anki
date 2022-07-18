@@ -106,18 +106,17 @@ export default class SeamlessAnki extends Plugin {
 
 
 		const postProc: MarkdownPostProcessor = (el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
-			const paragraphs = el.querySelectorAll('p');
+			const paragraphs = el.querySelectorAll('p, li');
 			for(let i = 0; i < paragraphs.length; i++) {
-
-				const paragraph = (paragraphs[i] as HTMLElement).innerText;
-				if (paragraph.contains(">>")) {
-					(paragraphs[i] as HTMLElement).innerText = paragraph.replace(/\s*>>\s*/gm, " → ");			
+				const paragraph = (paragraphs[i] as HTMLElement).innerHTML;
+				if (paragraph.contains("&gt;&gt;")) {
+					(paragraphs[i] as HTMLElement).innerHTML = paragraph.replace(/\s*&gt;&gt;\s*/gm, " → ");			
 				}
 			}
 		}
-		
+
 		this.registerMarkdownPostProcessor(postProc);
-		
+	
 	}
 
 	onunload() {
