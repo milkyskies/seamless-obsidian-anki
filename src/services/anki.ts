@@ -42,10 +42,11 @@ export class Anki {
 
 	public async addNote(card: Card) {
 		//console.log(card.fields);
+		console.log(card.type);
 		const result = await this.invoke("addNote", 6, {
 			note: {
 				deckName: "Default",
-				modelName: Number(card.type),
+				modelName: card.type,
 				options: {
 					allowDuplicate: true,
 				},
