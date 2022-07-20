@@ -45,13 +45,11 @@ export class CardsService {
             if (blocks[i].properties.delete) {
                 await this.deleteCardOnAnki(this.generateCard(blocks[i]));
                 updatePage = true;
-                console.log("Deleted card " + id);
 
             }
 
 			if (updatePage == true) {
 				this.insertAnkiDataOnPage(blocks[i].lineNumber, id);
-				console.log("Updated card " + id);
 			}
 		}
 		return;
@@ -170,21 +168,16 @@ export class CardsService {
 
 		// ankistring is the new one, build new string
 		newAnki = this.buildAnkiString(propertyObj, id);
-		console.log("new anki: " + newAnki);
 
 		if (propertyObj.delete == true) {
             //editor.setLine(lineNumber, "");
 			editor.setLine(lineNumber, front + ">/>" + newBack + rest)
-			console.log("Cleared line " + lineNumber);
 		}
 		// write to document
 		else if (newAnki != anki) {
 			newLine = front + seperator + newBack + newAnki + rest;
 
 			editor.setLine(lineNumber, newLine);
-			console.log("Modified line " + lineNumber);
-		} else {
-			console.log("No changes");
 		}
 	}
 

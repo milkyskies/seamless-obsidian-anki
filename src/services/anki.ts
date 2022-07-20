@@ -1,3 +1,4 @@
+import { Notice } from "obsidian";
 import { Card } from "src/entities/card";
 
 export class Anki {
@@ -41,8 +42,6 @@ export class Anki {
 	}
 
 	public async addNote(card: Card) {
-		//console.log(card.fields);
-		console.log(card.type);
 		const result = await this.invoke("addNote", 6, {
 			note: {
 				deckName: card.deck,
@@ -52,12 +51,11 @@ export class Anki {
 				},
 				fields: card.fields,
 			},
-		}).catch((e: unknown) => console.log(e));
+		}).catch((e: unknown) => new Notice("[SeamlessAnki] " + e));
 
+		console.log(result);
 		if (result) {
 			return result;
-		} else {
-			console.log("something aint right");
 		}
 		//if (result) console.log(result)
 		//result.then(value => console.log(value));

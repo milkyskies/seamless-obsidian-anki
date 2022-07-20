@@ -20,8 +20,6 @@ export default class SeamlessAnki extends Plugin {
 	settings: SeamlessAnkiSettings
 
 	async onload() {
-		console.log('Loading Plugin: Seamless Anki');
-		//const anki = new Anki();
 		this.cardsService = new CardsService(this.app);
 		await this.loadSettings();
 
@@ -59,9 +57,7 @@ export default class SeamlessAnki extends Plugin {
 			id: 'sample-editor-command',
 			name: 'Sample editor command',
 			editorCallback: (editor: Editor, view: MarkdownView) => {
-				// console.log(editor.getSelection());
 				console.log(editor.lastLine());
-				//editor.replaceSelection('Sample Editor Command');
 			}
 		});
 		// This adds a complex command that can check whether the current state of the app allows execution of the command
@@ -110,7 +106,7 @@ export default class SeamlessAnki extends Plugin {
 	}
 
 	onunload() {
-		console.log('Unloading Plugin: Seamless Anki');
+		
 	}
 
 	async loadSettings() {
@@ -122,20 +118,15 @@ export default class SeamlessAnki extends Plugin {
 	}
 
 	private generateCards(activeFile: TFile) {
-		//const anki = new Anki();
-		//anki.addNote();
+		new Notice("[SeamlessAnki] Generating cards from this page...")
 
 		const cardsService = this.cardsService;
 		
 
-		cardsService.execute(activeFile).then(res => {
-			for (const r of res) {
-				new Notice(r,  15*1000)
-			}
-			console.log(res)
-		}).catch(err => {
-			Error(err)
-		});
+		cardsService.execute(activeFile).catch(err => {
+			Error(err);
+			return;
+		}).then(() => new Notice("[SeamlessAnki] Finished generating cards."));
 	}
 	
 }
