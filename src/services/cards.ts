@@ -67,7 +67,7 @@ export class CardsService {
 	private generateCard(block: Block): Card {
 		let card: Card;
 		if (block.properties["type"] == "Basic") {
-			card = new Card(block.properties["id"], "Cloze");
+			card = new Card(block.properties.id, "Cloze", block.properties.deck);
 			const parents = block.itemParents;
 			if (parents.length > 0) {
 				card.fields["Text"] = this.convertTextToHTML(
@@ -104,6 +104,12 @@ export class CardsService {
 		return html;
 	}
 
+	private async getCardDeck(id: number) {
+		const anki = new Anki();
+		const deck = await anki.getDeck(id);
+		return deck;
+	}
+
 	private async insertCardOnAnki(card: Card) {
 		const anki = new Anki();
 		const id = await anki.addNote(card);
@@ -112,6 +118,10 @@ export class CardsService {
 
 	private async updateCardOnAnki(card: Card) {
 		const anki = new Anki();
+		const originalDeck = await this.getCardDeck(card.id);
+		if(originalDeck != card.deck) {
+			await anki.changeDeck(card.id, card.deck)
+		}
 		const id = await anki.updateNoteFields(card);
 		return id;
 	}
@@ -160,9 +170,11 @@ export class CardsService {
 
 		// ankistring is the new one, build new string
 		newAnki = this.buildAnkiString(propertyObj, id);
+		console.log("new anki: " + newAnki);
 
 		if (propertyObj.delete == true) {
-            editor.setLine(lineNumber, "");
+            //editor.setLine(lineNumber, "");
+			editor.setLine(lineNumber, front + ">/>" + newBack + rest)
 			console.log("Cleared line " + lineNumber);
 		}
 		// write to document

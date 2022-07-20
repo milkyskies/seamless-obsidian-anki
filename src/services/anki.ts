@@ -45,7 +45,7 @@ export class Anki {
 		console.log(card.type);
 		const result = await this.invoke("addNote", 6, {
 			note: {
-				deckName: "Default",
+				deckName: card.deck,
 				modelName: card.type,
 				options: {
 					allowDuplicate: true,
@@ -63,11 +63,29 @@ export class Anki {
 		//result.then(value => console.log(value));
 	}
 
+	public async getDeck(id: number) {
+		const result = await this.invoke("getDecks", 6, {
+			"cards": [id]
+		}).catch((e: unknown) => console.log(e));
+		return Object.keys(result)[0];
+	}
+
+
+	public async changeDeck(id: number, targetDeck: string) {
+		const result = await this.invoke("changeDeck", 6, {
+			"cards": [id],
+			"deck": targetDeck
+		}).catch((e: unknown) => console.log(e));
+
+		return result[0];
+
+	}
+
 	public async updateNoteFields(card: Card) {
+		console.log(card.deck);
 		await this.invoke("updateNoteFields", 6, {
 			note: {
-        id: Number(card.id),
-				deckName: "Default",
+				id: Number(card.id),
 				modelName: card.type,
 				options: {
 					allowDuplicate: true,
@@ -77,13 +95,11 @@ export class Anki {
 		}).catch((e: unknown) => console.log(e));
 	}
 
-  public async deleteNotes(card: Card) {
-    await this.invoke("deleteNotes", 6, {
-			notes: [
-        Number(card.id),
-    ],
+	public async deleteNotes(card: Card) {
+		await this.invoke("deleteNotes", 6, {
+			notes: [Number(card.id)],
 		}).catch((e: unknown) => console.log(e));
-  }
+	}
 
 	public async listDecks() {
 		await this.invoke("createDeck", 6, { deck: "test1" });
