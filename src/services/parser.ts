@@ -166,14 +166,11 @@ export class Parser {
 					// TODO: card type shortcuts
 					key = "type";
 					value = "Basic";
-				} else if (match[1] == "x") {
+				} else if (["delete", "x"].contains(match[1])) {
 					key = "delete";
 					value = true;
-				} else if (match[1] == "u") {
+				} else if (["update", "u"].contains(match[1])) {
 					key = "update";
-					value = true;
-				} else if (["update", "delete"].contains(match[1])) {
-					key = match[1];
 					value = true;
 				} else {
 					console.error(
